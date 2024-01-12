@@ -2,15 +2,20 @@
 #include "linked_list.h"
 #pragma once
 
+//aggiunta predicted burst
 
 typedef struct {
   ListItem list;
   int pid;
   ListHead events;
+  double pred_burst;
+  double rem_burst;
 } FakePCB;
 
 struct FakeOS;
 typedef void (*ScheduleFn)(struct FakeOS* os, void* args);
+
+//aggiunta last_pred_burst q(t)
 
 typedef struct FakeOS{
   FakePCB* running;
@@ -21,6 +26,7 @@ typedef struct FakeOS{
   void* schedule_args;
 
   ListHead processes;
+  double last_pred_burst;
 } FakeOS;
 
 void FakeOS_init(FakeOS* os);

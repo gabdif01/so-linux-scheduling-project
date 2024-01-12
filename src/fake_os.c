@@ -11,6 +11,7 @@ void FakeOS_init(FakeOS* os) {
   List_init(&os->processes);
   os->timer=0;
   os->schedule_fn=0;
+  os->last_pred_burst=-1; //inizializzazione nuovo campo della struttura last_pred_ burst
 }
 
 void FakeOS_createProcess(FakeOS* os, FakeProcess* p) {
@@ -47,6 +48,14 @@ void FakeOS_createProcess(FakeOS* os, FakeProcess* p) {
   ProcessEvent* e=(ProcessEvent*)new_pcb->events.first;
   switch(e->type){
   case CPU:
+    //Calcolo il pred_burst del processo corrente ed aggiorno la last prediction del sistema operativo al tempo 'timer'
+    SchedRRArgs* oa_args = (SchedRRArgs*) os->schedule_args;
+    // recupero la last_pred_burst. Se è la prima predizione che faccio os->last_pred_burst vale -1 quindi utilizzo la predizione di deafult configurata
+    // altrimenti utilizzo la ultima predizione calcolata del sistema operativo
+    double p_last_pred_bust = os->last_pred_burst<0 ? os_args->firstPredBurst : p_last_pred_bust;
+    double p_pred_burst = os_args->alfa * e->duration + os_args->alfa * p_last_pred_bust;
+    new_pcb->pred_burst = p_pred_burst; // aggiornamento della predzione del processo
+    os->last_pred_burst = p_pred_burst; // aggiornamento ultima predizione del SO
     List_pushBack(&os->ready, (ListItem*) new_pcb);
     break;
   case IO:
@@ -158,7 +167,7 @@ void FakeOS_simStep(FakeOS* os){
 
 
   // call schedule, if defined
-  if (os->schedule_fn && ! os->running){
+  if (os->schedule_fn && (! os->running || new_process)){
     (*os->schedule_fn)(os, os->schedule_args); 
   }
 

@@ -6,10 +6,12 @@
 FakeOS os;
 
 typedef struct {
+  int firstPredBurst;
+  double alfa;
   int quantum;
 } SchedRRArgs;
 
-void schedRR(FakeOS* os, void* args_){
+/*void schedRR(FakeOS* os, void* args_){
   SchedRRArgs* args=(SchedRRArgs*)args_;
 
   // look for the first process in ready
@@ -36,14 +38,45 @@ void schedRR(FakeOS* os, void* args_){
     e->duration-=args->quantum;
     List_pushFront(&pcb->events, (ListItem*)qe);
   }
-};
+};*/
+
+void schedSJF(FakeOS* os, void* args_){
+
+  SchedRRArgs* args=(SchedRRArgs*)args_;
+
+  //look for the first process in ready
+  // if none, return
+  if (!os->ready.first)
+    return;
+
+    FakePCB* pcb_min = (FakePCB*) os->ready.first;
+    double min_burst = pcb_min->pred_burst;
+
+    ListItem* aux=os->ready.first->next;
+
+    while(aux){
+
+      FakePCB* pcb_cur=(FakePCB*)aux;
+      aux=aux->next;
+      if (pcb_cur->pred_burst<min_burst){
+
+        min_burst = pcb_cur->pred_burst;
+        pcb_min = pcb_cur;
+
+      }
+
+    }
+
+//Decisione di schedulazione. Se ho posto metto in running direttamente il processo selezionato,
+//altrimenti controllo se il burst time pred è minore della duration del processo in running
+}
 
 int main(int argc, char** argv) {
   FakeOS_init(&os);
   SchedRRArgs srr_args;
   srr_args.quantum=5;
   os.schedule_args=&srr_args;
-  os.schedule_fn=schedRR;
+  os.schedule_fn=schedSJF;
   
   for (int i=1; i<argc; ++i){
     FakeProcess new_process;

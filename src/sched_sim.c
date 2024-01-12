@@ -5,11 +5,7 @@
 
 FakeOS os;
 
-typedef struct {
-  int firstPredBurst;
-  double alfa;
-  int quantum;
-} SchedRRArgs;
+
 
 /*void schedRR(FakeOS* os, void* args_){
   SchedRRArgs* args=(SchedRRArgs*)args_;
@@ -42,7 +38,7 @@ typedef struct {
 
 void schedSJF(FakeOS* os, void* args_){
 
-  SchedRRArgs* args=(SchedRRArgs*)args_;
+  SchedSJFArgs* args=(SchedSJFArgs*)args_;
 
   //look for the first process in ready
   // if none, return
@@ -67,14 +63,49 @@ void schedSJF(FakeOS* os, void* args_){
 
     }
 
-//Decisione di schedulazione. Se ho posto metto in running direttamente il processo selezionato,
-//altrimenti controllo se il burst time pred è minore della duration del processo in running
+  //Decisione di schedulazione. Se ho posto metto in running direttamente il processo selezionato,
+  //altrimenti controllo se il burst time pred è minore della duration del processo in running
+
+  if (!os->running) // Se ho spazio lo carico
+    os->running = pcb_min;
+
+    //se non ho spazio verifico se il processo candidato è nuovo
+    //if yes posso verificare se ci sono le condizioni di preemption altrimenti non faccio nulla
+
+  else if (pcb_min->arrival_time == os->timer){
+
+      //verifico se sono soddisfatte le condizioni di preemption
+
+      FakePCB* running=os->running;
+      ProcessEvent* e=(ProcessEvent*) running->events.first;
+      assert(e->type==CPU);
+      if (pcb_min->pred_burst < e->duration) {
+
+        // Eseguo la preemption
+        // Tolgo dalla catena di ready il processo candidato
+        List_detach(&os->ready, (ListItem*) pcb_min);
+        // Imposto il processo il running
+        os->running = pcb_min;
+
+        // Aggiorno la pred_burst del processo pre relazionato
+
+        double p_pred_burst = args->alfa * e->duration + args->alfa * os->last_pred_burst;
+        running->pred_burst = p_pred_burst;
+
+        // Inserisco l'attuale processo in running in catena di ready poichè avendo fatto preemption lui non ha terminato
+
+        List_pushBack(&os->ready, (ListItem*) running); 
+
+      }
+  }
+
+
 }
 
 int main(int argc, char** argv) {
   FakeOS_init(&os);
-  SchedRRArgs srr_args;
-  srr_args.quantum=5;
+  SchedSJFArgs srr_args;
+  srr_args.firstPredBurst=5;
   os.schedule_args=&srr_args;
   os.schedule_fn=schedSJF;
   

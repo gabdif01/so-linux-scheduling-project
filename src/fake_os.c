@@ -49,7 +49,7 @@ void FakeOS_createProcess(FakeOS* os, FakeProcess* p) {
   switch(e->type){
   case CPU:
     //Calcolo il pred_burst del processo corrente ed aggiorno la last prediction del sistema operativo al tempo 'timer'
-    SchedRRArgs* oa_args = (SchedRRArgs*) os->schedule_args;
+    SchedSJFArgs* os_args = (SchedSJFArgs*) os->schedule_args;
     // recupero la last_pred_burst. Se è la prima predizione che faccio os->last_pred_burst vale -1 quindi utilizzo la predizione di deafult configurata
     // altrimenti utilizzo la ultima predizione calcolata del sistema operativo
     double p_last_pred_bust = os->last_pred_burst<0 ? os_args->firstPredBurst : p_last_pred_bust;
@@ -77,6 +77,7 @@ void FakeOS_simStep(FakeOS* os){
   //scan process waiting to be started
   //and create all processes starting now
   ListItem* aux=os->processes.first;
+  int p_new = 0; // Variabile seganlino(flag) valorizzata ad  1 quando acquiscisco un nuovo processo
   while (aux){
     FakeProcess* proc=(FakeProcess*)aux;
     FakeProcess* new_process=0;
@@ -89,6 +90,7 @@ void FakeOS_simStep(FakeOS* os){
       new_process=(FakeProcess*)List_detach(&os->processes, (ListItem*)new_process);
       FakeOS_createProcess(os, new_process);
       free(new_process);
+      p_new = 1;
     }
   }
 
@@ -167,7 +169,7 @@ void FakeOS_simStep(FakeOS* os){
 
 
   // call schedule, if defined
-  if (os->schedule_fn && (! os->running || new_process)){
+  if (os->schedule_fn && (! os->running || p_new)){
     (*os->schedule_fn)(os, os->schedule_args); 
   }
 

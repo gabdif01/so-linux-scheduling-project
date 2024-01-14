@@ -89,8 +89,8 @@ void schedSJF(FakeOS* os, void* args_){
 
         // Aggiorno la pred_burst del processo pre relazionato
 
-        double p_pred_burst = args->alfa * e->duration + args->alfa * os->last_pred_burst;
-        running->pred_burst = p_pred_burst;
+        double new_pred_burst = args->alfa * e->duration + (1 - args->alfa) * os->last_pred_burst;
+        running->pred_burst = new_pred_burst;
 
         // Inserisco l'attuale processo in running in catena di ready poichè avendo fatto preemption lui non ha terminato
 
@@ -106,6 +106,7 @@ int main(int argc, char** argv) {
   FakeOS_init(&os);
   SchedSJFArgs srr_args;
   srr_args.firstPredBurst=5;
+  srr_args.alfa = 0.5;
   os.schedule_args=&srr_args;
   os.schedule_fn=schedSJF;
   

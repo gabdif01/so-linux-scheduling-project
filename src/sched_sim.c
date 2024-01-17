@@ -38,7 +38,7 @@ FakeOS os;
 
 void schedSJF(FakeOS* os, void* args_){
 
-  SchedSJFArgs* args=(SchedSJFArgs*)args_;
+  //SchedSJFArgs* args=(SchedSJFArgs*)args_;
 
   //look for the first process in ready
   // if none, return
@@ -66,9 +66,13 @@ void schedSJF(FakeOS* os, void* args_){
   //Decisione di schedulazione. Se ho posto metto in running direttamente il processo selezionato,
   //altrimenti controllo se il burst time pred è minore della duration del processo in running
 
-  if (!os->running) // Se ho spazio lo carico
+  if (!os->running){ // Se ho spazio lo carico
+    // Tolgo dalla catena di ready il processo candidato
+    List_detach(&os->ready, (ListItem*) pcb_min);
     os->running = pcb_min;
 
+
+  }
     //se non ho spazio verifico se il processo candidato è nuovo
     //if yes posso verificare se ci sono le condizioni di preemption altrimenti non faccio nulla
 
@@ -83,15 +87,17 @@ void schedSJF(FakeOS* os, void* args_){
 
         // Eseguo la preemption
         // Tolgo dalla catena di ready il processo candidato
-        List_detach(&os->ready, (ListItem*) pcb_min);
+        printf("\t\texecute preemption pid:%d\n", running->pid);
+        printf("\t\tmove to ready\n");
+        List_detach(&os->ready, (ListItem*)pcb_min);
         // Imposto il processo il running
         os->running = pcb_min;
 
         // Aggiorno la pred_burst del processo pre relazionato
 
-        double new_pred_burst = args->alfa * e->duration + (1 - args->alfa) * os->last_pred_burst;
-        running->pred_burst = new_pred_burst;
+        FakeOS_updPredBurst(os,running,e);
 
+        
         // Inserisco l'attuale processo in running in catena di ready poichè avendo fatto preemption lui non ha terminato
 
         List_pushBack(&os->ready, (ListItem*) running); 

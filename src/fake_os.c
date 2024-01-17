@@ -12,6 +12,7 @@ void FakeOS_init(FakeOS* os) {
   os->timer=0;
   os->schedule_fn=0;
   os->last_pred_burst=-1; // inizializzazione nuovo campo della struttura last_pred_ burst
+
 }
 
 void FakeOS_createProcess(FakeOS* os, FakeProcess* p) {
@@ -48,24 +49,11 @@ void FakeOS_createProcess(FakeOS* os, FakeProcess* p) {
   // we put the process either in ready or in waiting
   ProcessEvent* e=(ProcessEvent*)new_pcb->events.first;
 
-  //Calcolo il pred_burst del processo corrente ed aggiorno la last prediction del sistema operativo al tempo 'timer'
-  SchedSJFArgs* os_args = (SchedSJFArgs*) os->schedule_args;
-  // recupero la last_pred_burst. Se è la prima predizione che faccio os->last_pred_burst vale -1 quindi utilizzo la predizione di deafult configurata
-  // altrimenti utilizzo la ultima predizione calcolata del sistema operativo
-  double p_last_pred_bust = -1;
-  double p_pred_burst = -1;
-
   switch(e->type){
   case CPU:
-    
-    p_last_pred_bust = os->last_pred_burst<0 ? os_args->firstPredBurst : os->last_pred_burst;
-    printf("\tpid:%d, p_last_pred_burst %f\n", new_pcb->pid, p_last_pred_bust);
-    p_pred_burst = os_args->alfa * e->duration + (1 - os_args->alfa) * p_last_pred_bust;
-    printf("t\pid:%d, p_pred_burst %f\n", new_pcb->pid, p_pred_burst);
-    new_pcb->pred_burst = p_pred_burst; // aggiornamento della predzione del processo
-    os->last_pred_burst = p_pred_burst; // aggiornamento ultima predizione del SO
+    //Calcolo il pred_burst del processo corrente ed aggiorno la last prediction del sistema operativo al tempo 'timer'
+    FakeOS_updPredBurst(os, new_pcb,e);
     List_pushBack(&os->ready, (ListItem*) new_pcb);
-    
     break;
   case IO:
     List_pushBack(&os->waiting, (ListItem*) new_pcb);
@@ -98,6 +86,7 @@ void FakeOS_simStep(FakeOS* os){
       printf("\tcreate pid:%d\n", new_process->pid);
       new_process=(FakeProcess*)List_detach(&os->processes, (ListItem*)new_process);
       FakeOS_createProcess(os, new_process);
+
       free(new_process);
       p_new = 1;
     }
@@ -128,6 +117,7 @@ void FakeOS_simStep(FakeOS* os){
         switch (e->type){
         case CPU:
           printf("\t\tmove to ready\n");
+          FakeOS_updPredBurst(os,pcb,e);
           List_pushBack(&os->ready, (ListItem*) pcb);
           break;
         case IO:
@@ -164,6 +154,7 @@ void FakeOS_simStep(FakeOS* os){
         switch (e->type){
         case CPU:
           printf("\t\tmove to ready\n");
+          FakeOS_updPredBurst(os,running,e);
           List_pushBack(&os->ready, (ListItem*) running);
           break;
         case IO:
@@ -189,6 +180,24 @@ void FakeOS_simStep(FakeOS* os){
   }
 
   ++os->timer;
+
+}
+
+void FakeOS_updPredBurst(FakeOS* os, FakePCB* pcb, ProcessEvent* e){
+  
+  SchedSJFArgs* os_args = (SchedSJFArgs*) os->schedule_args;
+ 
+  double p_last_pred_bust = -1;
+  double p_pred_burst = -1;
+
+  // recupero la last_pred_burst. Se è la prima predizione che faccio os->last_pred_burst vale -1 quindi utilizzo la predizione di deafult configurata
+  // altrimenti utilizzo la ultima predizione calcolata del sistema operativo
+  p_last_pred_bust = os->last_pred_burst<0 ? os_args->firstPredBurst : os->last_pred_burst;
+  printf("\tpid:%d, p_last_pred_burst %f\n", pcb->pid, p_last_pred_bust);
+  p_pred_burst = os_args->alfa * e->duration + (1 - os_args->alfa) * p_last_pred_bust;
+  printf("t\pid:%d, p_pred_burst %f\n", pcb->pid, p_pred_burst);
+  pcb->pred_burst = p_pred_burst; // aggiornamento della predzione del processo
+  os->last_pred_burst = p_pred_burst; // aggiornamento ultima predizione del SO
 
 }
 

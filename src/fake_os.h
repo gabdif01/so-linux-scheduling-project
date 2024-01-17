@@ -41,3 +41,5 @@ typedef struct {
 void FakeOS_init(FakeOS* os);
 void FakeOS_simStep(FakeOS* os);
 void FakeOS_destroy(FakeOS* os);
+// metodo ausilario che quando necessario aggiorna la pred_burst del processo che sta per essere inserito in catena di ready
+void FakeOS_updPredBurst(FakeOS* os, FakePCB* pcb, ProcessEvent* e);

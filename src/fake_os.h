@@ -1,6 +1,11 @@
 #include "fake_process.h"
 #include "linked_list.h"
 #pragma once
+#define INIT_PRED_BURST 5
+#define ALFA 0.5
+#define CPU 2
+
+
 
 //aggiunta predicted burst
 
@@ -16,10 +21,11 @@ typedef struct {
 struct FakeOS;
 typedef void (*ScheduleFn)(struct FakeOS* os, void* args);
 
-//aggiunta last_pred_burst q(t)
+// aggiunta last_pred_burst q(t)
+// trasformazione variablie running da campo singolo a lista per consentire la gestione multipla di CPU
 
 typedef struct FakeOS{
-  FakePCB* running;
+  ListHead runnings;
   ListHead ready;
   ListHead waiting;
   int timer;

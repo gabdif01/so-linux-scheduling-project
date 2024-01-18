@@ -40,10 +40,17 @@ void schedSJF(FakeOS* os, void* args_){
 
   //SchedSJFArgs* args=(SchedSJFArgs*)args_;
 
-  //look for the first process in ready
-  // if none, return
-  if (!os->ready.first)
-    return;
+ 
+
+
+  while(os->runnings.size<CPU ){
+
+     //look for the first process in ready
+    // if none, return
+    if (!os->ready.first)
+      return;
+
+    // Calcolo il processo candidato
 
     FakePCB* pcb_min = (FakePCB*) os->ready.first;
     double min_burst = pcb_min->pred_burst;
@@ -60,47 +67,58 @@ void schedSJF(FakeOS* os, void* args_){
         pcb_min = pcb_cur;
 
       }
-
     }
+
+    // Tolgo dalla catena di ready il processo candidato
+    pcb_min=List_detach(&os->ready, (ListItem*) pcb_min);
+    // Aggiungo il processo candidato alla lista dei processi in running
+    List_pushBack(&os->runnings, (ListItem*) pcb_min);
+  
+  }
+
+  /**/
+  
 
   //Decisione di schedulazione. Se ho posto metto in running direttamente il processo selezionato,
   //altrimenti controllo se il burst time pred è minore della duration del processo in running
 
-  if (!os->running){ // Se ho spazio lo carico
-    // Tolgo dalla catena di ready il processo candidato
-    List_detach(&os->ready, (ListItem*) pcb_min);
-    os->running = pcb_min;
-
-
+  if (os->runnings.size<CPU){ // Se ho spazio lo carico
+    
   }
     //se non ho spazio verifico se il processo candidato è nuovo
     //if yes posso verificare se ci sono le condizioni di preemption altrimenti non faccio nulla
 
   else if (pcb_min->arrival_time == os->timer){
 
-      //verifico se sono soddisfatte le condizioni di preemption
+      //verifico se sono soddisfatte le condizioni di preemption per ogni processo in running
 
-      FakePCB* running=os->running;
-      ProcessEvent* e=(ProcessEvent*) running->events.first;
-      assert(e->type==CPU);
-      if (pcb_min->pred_burst < e->duration) {
+      ListItem* aux = os->runnings.first;
+      while(aux){
+        FakePCB* running=(FakePCB*)aux;
+        aux = aux->next;
+        ProcessEvent* e=(ProcessEvent*) running->events.first;
+        assert(e->type==CPU);
+        if (pcb_min->pred_burst < e->duration) {
 
-        // Eseguo la preemption
-        // Tolgo dalla catena di ready il processo candidato
-        printf("\t\texecute preemption pid:%d\n", running->pid);
-        printf("\t\tmove to ready\n");
-        List_detach(&os->ready, (ListItem*)pcb_min);
-        // Imposto il processo il running
-        os->running = pcb_min;
+          // Eseguo la preemption
+          // Tolgo dalla catena di ready il processo candidato
+          printf("\t\texecute preemption pid:%d\n", running->pid);
+          printf("\t\tmove to ready\n");
+          pcb_min = List_detach(&os->ready, (ListItem*)pcb_min);
+          running = List_detach(&os->runnings, (ListItem*)running);
+          // Imposto il processo il running
+          // Aggiungo il processo candidato alla lista dei processi in running
+          List_pushBack(&os->runnings, (ListItem*) pcb_min);
 
-        // Aggiorno la pred_burst del processo pre relazionato
+          // Aggiorno la pred_burst del processo pre relazionato
 
-        FakeOS_updPredBurst(os,running,e);
+          FakeOS_updPredBurst(os,running,e);
 
-        
-        // Inserisco l'attuale processo in running in catena di ready poichè avendo fatto preemption lui non ha terminato
 
-        List_pushBack(&os->ready, (ListItem*) running); 
+          // Inserisco l'attuale processo in running in catena di ready poichè avendo fatto preemption lui non ha terminato
+
+          List_pushBack(&os->ready, (ListItem*) running);
+        } 
 
       }
   }
@@ -111,8 +129,8 @@ void schedSJF(FakeOS* os, void* args_){
 int main(int argc, char** argv) {
   FakeOS_init(&os);
   SchedSJFArgs srr_args;
-  srr_args.firstPredBurst=5;
-  srr_args.alfa = 0.5;
+  srr_args.firstPredBurst=INIT_PRED_BURST;
+  srr_args.alfa = ALFA;
   os.schedule_args=&srr_args;
   os.schedule_fn=schedSJF;
   
@@ -128,7 +146,7 @@ int main(int argc, char** argv) {
     }
   }
   printf("num processes in queue %d\n", os.processes.size);
-  while(os.running
+  while(os.runnings.first  // come nelle altre liste
         || os.ready.first
         || os.waiting.first
         || os.processes.first){

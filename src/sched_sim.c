@@ -76,25 +76,44 @@ void schedSJF(FakeOS* os, void* args_){
   
   }
 
-  /**/
+  // Controllo se ho ancora processi in ready
+
+  if (!os->ready.first)
+    return;
+
+
+  int preempted = 0; // flag che mi indica se all'ultimo giro ho fatto preemption
+  
+  while (!preempted && pcb_min){
+
+  FakePCB* pcb_min = 0;
+  double min_burst = -1;
+  ListItem* aux=os->ready.first;
+  while(aux){
+    FakePCB* pcb=(FakePCB*) aux;
+    aux = aux->next;
+    if (pcb_min->arrival_time == os->timer){
+
+      if ((!pcb_min && min_burst < 0) || (pcb->pred_burst<min_burst)){
+
+        pcb_min = pcb;
+        min_burst = pcb->pred_burst;
+    
+      }
+
+    }
+  }
   
 
-  //Decisione di schedulazione. Se ho posto metto in running direttamente il processo selezionato,
-  //altrimenti controllo se il burst time pred è minore della duration del processo in running
+    // Ho scelto il minimo tra i processi nuovi
+    if (pcb_min){
 
-  if (os->runnings.size<CPU){ // Se ho spazio lo carico
-    
-  }
-    //se non ho spazio verifico se il processo candidato è nuovo
-    //if yes posso verificare se ci sono le condizioni di preemption altrimenti non faccio nulla
-
-  else if (pcb_min->arrival_time == os->timer){
-
-      //verifico se sono soddisfatte le condizioni di preemption per ogni processo in running
+    //verifico se sono soddisfatte le condizioni di preemption per ogni processo in running
 
       ListItem* aux = os->runnings.first;
       while(aux){
-        FakePCB* running=(FakePCB*)aux;
+
+        FakePCB* running=(FakePCB*) aux;
         aux = aux->next;
         ProcessEvent* e=(ProcessEvent*) running->events.first;
         assert(e->type==CPU);
@@ -121,8 +140,9 @@ void schedSJF(FakeOS* os, void* args_){
         } 
 
       }
-  }
 
+    }
+  }
 
 }
 

@@ -3,18 +3,18 @@
 #pragma once
 #define INIT_PRED_BURST 5
 #define ALFA 0.5
-#define CPU 2
+#define CPU_NUMBER 2
 
 
 
-//aggiunta predicted burst
+// aggiunta predicted burst 
 
 typedef struct {
   ListItem list;
   int pid;
   ListHead events;
   double pred_burst;
-  // double rem_burst;
+//  double rem_burst;
   int arrival_time;
 } FakePCB;
 
@@ -22,8 +22,7 @@ struct FakeOS;
 typedef void (*ScheduleFn)(struct FakeOS* os, void* args);
 
 // aggiunta last_pred_burst q(t)
-// trasformazione variablie running da campo singolo a lista per consentire la gestione multipla di CPU
-
+// trasformazione variabile running da campo singola a lista per consentire la gestione multipla di CPU
 typedef struct FakeOS{
   ListHead runnings;
   ListHead ready;
@@ -36,7 +35,8 @@ typedef struct FakeOS{
   double last_pred_burst;
 } FakeOS;
 
-// adjust structure to load alfa (alfa) and first predicted quantum ì (firstPredBurst) args
+
+// adjust structure to load alfa (alfa) and first predicted quantum (firstPredBurst) args
 // the first predicted quantum will be used to calculate the first CPU burst prediction at T0 time
 
 typedef struct {
@@ -44,8 +44,10 @@ typedef struct {
   double alfa;
 } SchedSJFArgs;
 
+
+
 void FakeOS_init(FakeOS* os);
 void FakeOS_simStep(FakeOS* os);
 void FakeOS_destroy(FakeOS* os);
-// metodo ausilario che quando necessario aggiorna la pred_burst del processo che sta per essere inserito in catena di ready
+// metodo ausiliario che quando necessario aggiorna la pred_burst del processo che sta per essere inserito in catena di ready
 void FakeOS_updPredBurst(FakeOS* os, FakePCB* pcb, ProcessEvent* e);

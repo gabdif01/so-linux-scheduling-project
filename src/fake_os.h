@@ -14,7 +14,7 @@ typedef struct {
   int pid;
   ListHead events;
   double pred_burst;
-//  double rem_burst;
+  double last_pred_burst;
   int arrival_time;
 } FakePCB;
 

@@ -47,6 +47,7 @@ void FakeOS_createProcess(FakeOS* os, FakeProcess* p) {
   new_pcb->pid=p->pid;
   new_pcb->events=p->events;
   new_pcb->arrival_time=p->arrival_time;
+  new_pcb->last_pred_burst = -1;
 
   assert(new_pcb->events.first && "process without events");
 
@@ -154,6 +155,7 @@ void FakeOS_simStep(FakeOS* os){
 	    assert(e->type==CPU);
 	    e->duration--;
 	    printf("\t\tremaining time:%d\n",e->duration);
+	    FakeOS_updPredBurst(os, running, e); // aggiorno il pred_burst del processo in running
 	    if (e->duration==0){
 	      printf("\t\tend burst\n");
 	      List_popFront(&running->events);
@@ -203,16 +205,20 @@ void FakeOS_updPredBurst(FakeOS* os, FakePCB* pcb, ProcessEvent* e){
   
   SchedSJFArgs* os_args = (SchedSJFArgs*) os->schedule_args;
   
-  double p_last_pred_burst = -1; 
-  double p_pred_burst = -1; 
+  double os_last_pred_burst = -1; // variabile locale per memorizzare l'ultima predizione del sistema operativo
+  double p_pred_burst = -1; // variabile locale per memorizzare la nuova predizione calcolata
+  double p_last_pred_burst = -1; // variabile locale per memorizzare l'ultima predizione che sar� utilizzata per il calcolo della futura predizione
+  
   
     // recupero la last_pred_burst. Se � la prima predizione che faccio os->last_pred_burst vale -1 quindi utilizzo la predizione di default configurata
   	// altrimenti utilizzo la ultima predizione calcolata dal sistema operativo
-  p_last_pred_burst = os->last_pred_burst<0 ? os_args->firstPredBurst : os->last_pred_burst;
-  printf("\tpid:%d, p_last_pred_burst %f\n", pcb->pid, p_last_pred_burst);
+  os_last_pred_burst = os->last_pred_burst<0 ? os_args->firstPredBurst : os->last_pred_burst;
+  printf("\tpid:%d, os_last_pred_burst %f, pcb_last_pred_burst %f\n ", pcb->pid, os_last_pred_burst, pcb->last_pred_burst);
+  p_last_pred_burst = pcb->last_pred_burst<0? os_last_pred_burst: pcb->last_pred_burst;
   p_pred_burst = os_args->alfa * e->duration + (1-os_args->alfa) * p_last_pred_burst;
   printf("\tpid:%d, p_pred_burst %f\n", pcb->pid, p_pred_burst);
   pcb->pred_burst = p_pred_burst; // aggiornamento della predizione del processo
+  pcb->last_pred_burst = p_pred_burst; // aggiornamento ultima predizione del processo
   os->last_pred_burst = p_pred_burst; // aggiornamento ultima predizione del SO
   
   

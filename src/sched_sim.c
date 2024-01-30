@@ -6,36 +6,6 @@
 FakeOS os;
 
 
-/*void schedRR(FakeOS* os, void* args_){
-  SchedRRArgs* args=(SchedRRArgs*)args_;
-
-  // look for the first process in ready
-  // if none, return
-  if (! os->ready.first)
-    return;
-
-  FakePCB* pcb=(FakePCB*) List_popFront(&os->ready);
-  os->running=pcb;
-  
-  assert(pcb->events.first);
-  ProcessEvent* e = (ProcessEvent*)pcb->events.first;
-  assert(e->type==CPU);
-
-  // look at the first event
-  // if duration>quantum
-  // push front in the list of event a CPU event of duration quantum
-  // alter the duration of the old event subtracting quantum
-  if (e->duration>args->quantum) {
-    ProcessEvent* qe=(ProcessEvent*)malloc(sizeof(ProcessEvent));
-    qe->list.prev=qe->list.next=0;
-    qe->type=CPU;
-    qe->duration=args->quantum;
-    e->duration-=args->quantum;
-    List_pushFront(&pcb->events, (ListItem*)qe);
-  }
-};*/
-
-
 void schedSJF(FakeOS* os, void* args_){
 
  // SchedSJFArgs* args=(SchedSJFArgs*)args_;
@@ -44,7 +14,7 @@ void schedSJF(FakeOS* os, void* args_){
  // Aggiornamento predizioni per i processi in catena di ready, in base alla last prediction aggiornata.
  // Questo mi consente di calcolare attendibilmente il processo tra i nuovi e i vecchi che ha la stima minore per schedulare.
  
- ListItem* aux=os->ready.first;
+ /*ListItem* aux=os->ready.first;
  
  while (aux){
  	
@@ -55,7 +25,7 @@ void schedSJF(FakeOS* os, void* args_){
  	
  	FakeOS_updPredBurst(os,pcb,e);
  	
- }
+ }*/
  
  
   while (os->runnings.size<CPU_NUMBER){
@@ -139,7 +109,7 @@ void schedSJF(FakeOS* os, void* args_){
 			   	ProcessEvent* e=(ProcessEvent*) running->events.first;
 	    	  	assert(e->type==CPU);
 	    	  
-			  	if (pcb_min->pred_burst < e->duration) {
+			  	if (pcb_min->pred_burst < running->pred_burst) {
 			  	
 				  	// Eseguo la preemption 
 				  	// Tolgo dalla catena di ready il processo candidato
@@ -150,10 +120,6 @@ void schedSJF(FakeOS* os, void* args_){
 				  	// Imposto il processo il running 
 				  	// Aggiungo il processo candidato alla lista dei processi in running
 	  				List_pushBack(&os->runnings, (ListItem*) pcb_min);
-				  	
-				  	// Aggiorno la pred_burst del processo pre relazionato 
-				  	
-				  	FakeOS_updPredBurst(os,running,e);
 				  	
 					  // Inserisco l'attuale processo in running in catena di ready poich� avendo fatto preemption lui non ha terminato
 				  	

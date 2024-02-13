@@ -184,14 +184,16 @@ void FakeOS_simStep(FakeOS* os){
 	  }
   }
   
+  SchedSJFArgs* args=(SchedSJFArgs*)os->schedule_args;
+ 
   // call schedule, if defined
-  if (os->schedule_fn && (os->runnings.size < CPU_NUMBER || p_new )){
+  if (os->schedule_fn && (os->runnings.size < args->cpu_num || p_new )){
     (*os->schedule_fn)(os, os->schedule_args); 
   }
 
   // if running not defined and ready queue not empty
   // put the first in ready to run
-  if (!os->schedule_fn && os->runnings.size<CPU_NUMBER && os->ready.first) {
+  if (!os->schedule_fn && os->runnings.size<args->cpu_num && os->ready.first) {
     FakePCB* aux =(FakePCB*) List_popFront(&os->ready);
     List_pushBack(&os->runnings, (ListItem*) aux); 
   }
@@ -207,10 +209,10 @@ void FakeOS_updPredBurst(FakeOS* os, FakePCB* pcb, ProcessEvent* e){
   
   double os_last_pred_burst = -1; // variabile locale per memorizzare l'ultima predizione del sistema operativo
   double p_pred_burst = -1; // variabile locale per memorizzare la nuova predizione calcolata
-  double p_last_pred_burst = -1; // variabile locale per memorizzare l'ultima predizione che sar� utilizzata per il calcolo della futura predizione
+  double p_last_pred_burst = -1; // variabile locale per memorizzare l'ultima predizione che sarà utilizzata per il calcolo della futura predizione
   
   
-    // recupero la last_pred_burst. Se � la prima predizione che faccio os->last_pred_burst vale -1 quindi utilizzo la predizione di default configurata
+    // recupero la last_pred_burst. Se è la prima predizione che faccio os->last_pred_burst vale -1 quindi utilizzo la predizione di default configurata
   	// altrimenti utilizzo la ultima predizione calcolata dal sistema operativo
   os_last_pred_burst = os->last_pred_burst<0 ? os_args->firstPredBurst : os->last_pred_burst;
   printf("\tpid:%d, os_last_pred_burst %f, pcb_last_pred_burst %f\n ", pcb->pid, os_last_pred_burst, pcb->last_pred_burst);

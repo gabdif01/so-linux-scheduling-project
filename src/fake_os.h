@@ -3,7 +3,7 @@
 #pragma once
 #define INIT_PRED_BURST 5
 #define ALFA 0.5
-#define CPU_NUMBER 2
+
 
 
 
@@ -42,6 +42,7 @@ typedef struct FakeOS{
 typedef struct {
   int firstPredBurst;
   double alfa;
+  int cpu_num;
 } SchedSJFArgs;
 
 

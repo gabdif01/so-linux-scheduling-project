@@ -8,7 +8,7 @@ FakeOS os;
 
 void schedSJF(FakeOS* os, void* args_){
 
- // SchedSJFArgs* args=(SchedSJFArgs*)args_;
+
  
  
  // Aggiornamento predizioni per i processi in catena di ready, in base alla last prediction aggiornata.
@@ -27,12 +27,13 @@ void schedSJF(FakeOS* os, void* args_){
  	
  }*/
  
- 
-  while (os->runnings.size<CPU_NUMBER){
+  SchedSJFArgs* args=(SchedSJFArgs*)args_;
+  
+  while (os->runnings.size<args->cpu_num){
   	
   	  // look for the first process in ready
   		// if none, return
- 	if (!os->ready.first)
+ 	if (!os->ready.first) 
     	return;
   	
   	// Calcolo il processo candidato 
@@ -73,7 +74,7 @@ void schedSJF(FakeOS* os, void* args_){
     
     while (!f_exit) {
     	
-    	// Calcolo del minimo solo sui processi nuovi. Considero solo i nuovi perch� in questo step sto analizzando la possibilit� di preemption.
+    	// Calcolo del minimo solo sui processi nuovi. Considero solo i nuovi perchè in questo step sto analizzando la possibilità di preemption.
 		
 	    FakePCB* pcb_min = 0;
 		double min_burst = -1;
@@ -121,7 +122,7 @@ void schedSJF(FakeOS* os, void* args_){
 				  	// Aggiungo il processo candidato alla lista dei processi in running
 	  				List_pushBack(&os->runnings, (ListItem*) pcb_min);
 				  	
-					  // Inserisco l'attuale processo in running in catena di ready poich� avendo fatto preemption lui non ha terminato
+					  // Inserisco l'attuale processo in running in catena di ready poichè avendo fatto preemption lui non ha terminato
 				  	
 				  	List_pushBack(&os->ready, (ListItem*) running);
 				  	f_preemption = 1;
@@ -132,7 +133,7 @@ void schedSJF(FakeOS* os, void* args_){
 			  if (!f_preemption)
 			  		f_exit = 1;
 		}else 
-			f_exit = 1; // non ho necessit� di continuare, quindi setto il flag a 1 per uscire	
+			f_exit = 1; // non ho necessità di continuare, quindi setto il flag a 1 per uscire	
 	}
 
 }
@@ -143,12 +144,14 @@ int main(int argc, char** argv) {
   SchedSJFArgs srr_args;
   srr_args.firstPredBurst=INIT_PRED_BURST;
   srr_args.alfa = ALFA;
+  srr_args.cpu_num = atoi(argv[1]);
+  printf ("Numero di CPU scelte: %d\n", srr_args.cpu_num);
   os.schedule_args=&srr_args;
   os.schedule_fn=schedSJF;
   
-  for (int i=1; i<argc; ++i){
+  for (int i=2; i<argc; ++i){
     FakeProcess new_process;
-    int num_events=FakeProcess_load(&new_process, argv[i]);
+    int num_events=FakeProcess_load(&new_process, argv[i]); // leggo il nome del file 
     printf("loading [%s], pid: %d, events:%d",
            argv[i], new_process.pid, num_events);
     if (num_events) {
